@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initiho al-scale=1.0">
-    <title>Game Hub - I Miei Giochi</title>
+    <title>Vibe Hub - I Miei Giochi</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600;700&display=swap');
@@ -449,7 +449,7 @@
     <!-- Main Hub -->
     <div id="hub-container" class="hidden">
         <header>
-            <h1>🎮 GAME HUB 🎮</h1>
+            <h1>🎮 VIBE HUB 🎮</h1>
             <div class="user-info">
                 <div class="user-badge">
                     <span>👤</span>
@@ -559,24 +559,39 @@
 
         async function loadGameScores() {
             try {
-                // Load Keyboard Hero scores from Supabase
-                const { data: khData, error: khError } = await supabase
+                // Load Keyboard Hero Medium scores from Supabase
+                const { data: mediumData, error: mediumError } = await supabase
                     .from('scores')
-                    .select('difficulty, score')
+                    .select('score')
                     .eq('nickname', currentNickname)
                     .eq('game', 'keyboard-hero')
-                    .order('score', { ascending: false });
+                    .eq('difficulty', 'medium')
+                    .order('score', { ascending: false })
+                    .limit(1);
 
-                if (khError) {
-                    console.error('Error loading KH scores:', khError);
+                if (mediumError) {
+                    console.error('Error loading KH medium scores:', mediumError);
                     document.getElementById('kh-medium-score').textContent = '0';
+                } else {
+                    const mediumScore = mediumData && mediumData.length > 0 ? mediumData[0].score : 0;
+                    document.getElementById('kh-medium-score').textContent = mediumScore;
+                }
+
+                // Load Keyboard Hero Hard scores from Supabase
+                const { data: hardData, error: hardError } = await supabase
+                    .from('scores')
+                    .select('score')
+                    .eq('nickname', currentNickname)
+                    .eq('game', 'keyboard-hero')
+                    .eq('difficulty', 'hard')
+                    .order('score', { ascending: false })
+                    .limit(1);
+
+                if (hardError) {
+                    console.error('Error loading KH hard scores:', hardError);
                     document.getElementById('kh-hard-score').textContent = '0';
                 } else {
-                    // Get best scores per difficulty
-                    const mediumScore = khData.find(s => s.difficulty === 'medium')?.score || 0;
-                    const hardScore = khData.find(s => s.difficulty === 'hard')?.score || 0;
-
-                    document.getElementById('kh-medium-score').textContent = mediumScore;
+                    const hardScore = hardData && hardData.length > 0 ? hardData[0].score : 0;
                     document.getElementById('kh-hard-score').textContent = hardScore;
                 }
 
