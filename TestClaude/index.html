@@ -478,11 +478,18 @@
                 <button class="btn play-btn" onclick="playGame('keyboard-hero'); event.stopPropagation();">Gioca Ora!</button>
             </div>
 
-            <!-- Placeholder per futuri giochi -->
-            <div class="game-card" style="opacity: 0.5; cursor: not-allowed;">
-                <div class="game-icon">🎯</div>
-                <h2>Prossimamente...</h2>
-                <p>Nuovi giochi in arrivo! Resta sintonizzato per altre sfide emozionanti!</p>
+            <!-- Cyber Defense Card -->
+            <div class="game-card" onclick="playGame('cyber-defense')">
+                <div class="game-icon">⚡</div>
+                <h2>Cyber Defense</h2>
+                <p>Difendi la tua base dai virus cyber! Piazza torrette strategiche e sopravvivi il più a lungo possibile!</p>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-label">Record Sopravvivenza</div>
+                        <div class="stat-value" id="cd-survival-time">0:00</div>
+                    </div>
+                </div>
+                <button class="btn play-btn" onclick="playGame('cyber-defense'); event.stopPropagation();">Gioca Ora!</button>
             </div>
         </div>
 
@@ -492,6 +499,7 @@
             <div class="leaderboard-tabs">
                 <button class="tab-btn active" onclick="loadLeaderboard('keyboard-hero', 'medium', this)">KH - Medio</button>
                 <button class="tab-btn" onclick="loadLeaderboard('keyboard-hero', 'hard', this)">KH - Difficile</button>
+                <button class="tab-btn" onclick="loadLeaderboard('cyber-defense', 'survival', this)">CD - Survival</button>
             </div>
             <div id="leaderboard-list" class="leaderboard-list">
                 <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Caricamento...</div>
@@ -552,30 +560,50 @@
         async function loadGameScores() {
             try {
                 // Load Keyboard Hero scores from Supabase
-                const { data, error } = await supabase
+                const { data: khData, error: khError } = await supabase
                     .from('scores')
                     .select('difficulty, score')
                     .eq('nickname', currentNickname)
                     .eq('game', 'keyboard-hero')
                     .order('score', { ascending: false });
 
-                if (error) {
-                    console.error('Error loading scores:', error);
+                if (khError) {
+                    console.error('Error loading KH scores:', khError);
                     document.getElementById('kh-medium-score').textContent = '0';
                     document.getElementById('kh-hard-score').textContent = '0';
-                    return;
+                } else {
+                    // Get best scores per difficulty
+                    const mediumScore = khData.find(s => s.difficulty === 'medium')?.score || 0;
+                    const hardScore = khData.find(s => s.difficulty === 'hard')?.score || 0;
+
+                    document.getElementById('kh-medium-score').textContent = mediumScore;
+                    document.getElementById('kh-hard-score').textContent = hardScore;
                 }
 
-                // Get best scores per difficulty
-                const mediumScore = data.find(s => s.difficulty === 'medium')?.score || 0;
-                const hardScore = data.find(s => s.difficulty === 'hard')?.score || 0;
+                // Load Cyber Defense scores from Supabase
+                const { data: cdData, error: cdError } = await supabase
+                    .from('scores')
+                    .select('score')
+                    .eq('nickname', currentNickname)
+                    .eq('game', 'cyber-defense')
+                    .eq('difficulty', 'survival')
+                    .order('score', { ascending: false })
+                    .limit(1);
 
-                document.getElementById('kh-medium-score').textContent = mediumScore;
-                document.getElementById('kh-hard-score').textContent = hardScore;
+                if (cdError) {
+                    console.error('Error loading CD scores:', cdError);
+                    document.getElementById('cd-survival-time').textContent = '0:00';
+                } else {
+                    const bestTime = cdData && cdData.length > 0 ? cdData[0].score : 0;
+                    const mins = Math.floor(bestTime / 60);
+                    const secs = Math.floor(bestTime % 60);
+                    document.getElementById('cd-survival-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                }
             } catch (err) {
                 console.error('Error:', err);
                 document.getElementById('kh-medium-score').textContent = '0';
                 document.getElementById('kh-hard-score').textContent = '0';
+                document.getElementById('cd-survival-time').textContent = '0:00';
             }
         }
 
@@ -623,11 +651,20 @@
                 listContainer.innerHTML = sortedScores.map((item, index) => {
                     const rankClass = index === 0 ? 'first' : index === 1 ? 'second' : index === 2 ? 'third' : '';
                     const isCurrentUser = item.nickname === currentNickname;
+
+                    // Format score based on game type
+                    let displayScore = item.score;
+                    if (game === 'cyber-defense' && difficulty === 'survival') {
+                        const mins = Math.floor(item.score / 60);
+                        const secs = Math.floor(item.score % 60);
+                        displayScore = `${mins}:${secs.toString().padStart(2, '0')}`;
+                    }
+
                     return `
                         <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
                             <div class="rank ${rankClass}">#${index + 1}</div>
                             <div class="player-name">${item.nickname}${isCurrentUser ? ' (Tu)' : ''}</div>
-                            <div class="player-score">${item.score}</div>
+                            <div class="player-score">${displayScore}</div>
                         </div>
                     `;
                 }).join('');
@@ -639,10 +676,8 @@
         }
 
         function playGame(gameId) {
-            if (gameId === 'keyboard-hero') {
-                // Pass nickname to the game via URL parameter
-                window.location.href = `keyboard-hero.html?nickname=${encodeURIComponent(currentNickname)}`;
-            }
+            // Pass nickname to the game via URL parameter
+            window.location.href = `${gameId}.html?nickname=${encodeURIComponent(currentNickname)}`;
         }
 
         // Allow Enter key to submit nickname
