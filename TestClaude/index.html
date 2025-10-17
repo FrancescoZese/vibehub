@@ -467,12 +467,8 @@
                 <p>Premi le lettere che cadono al ritmo giusto! Note singole, doppie, triple e lunghe ti aspettano!</p>
                 <div class="game-stats">
                     <div class="stat">
-                        <div class="stat-label">Record Medio</div>
-                        <div class="stat-value" id="kh-medium-score">0</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-label">Record Difficile</div>
-                        <div class="stat-value" id="kh-hard-score">0</div>
+                        <div class="stat-label">Record</div>
+                        <div class="stat-value" id="kh-score">0</div>
                     </div>
                 </div>
                 <button class="btn play-btn" onclick="playGame('keyboard-hero'); event.stopPropagation();">Gioca Ora!</button>
@@ -491,15 +487,29 @@
                 </div>
                 <button class="btn play-btn" onclick="playGame('cyber-defense'); event.stopPropagation();">Gioca Ora!</button>
             </div>
+
+            <!-- Cyber Golf Card -->
+            <div class="game-card" onclick="playGame('cyber-golf')">
+                <div class="game-icon">⛳</div>
+                <h2>Cyber Golf</h2>
+                <p>Minigolf con ostacoli! Mira, colpisci e metti la palla in buca con meno colpi possibili!</p>
+                <div class="game-stats">
+                    <div class="stat">
+                        <div class="stat-label">Record</div>
+                        <div class="stat-value" id="cg-score">0</div>
+                    </div>
+                </div>
+                <button class="btn play-btn" onclick="playGame('cyber-golf'); event.stopPropagation();">Gioca Ora!</button>
+            </div>
         </div>
 
         <!-- Leaderboard Section -->
         <div class="leaderboard-section">
             <h2>🏆 Classifica Globale</h2>
             <div class="leaderboard-tabs">
-                <button class="tab-btn active" onclick="loadLeaderboard('keyboard-hero', 'medium', this)">KH - Medio</button>
-                <button class="tab-btn" onclick="loadLeaderboard('keyboard-hero', 'hard', this)">KH - Difficile</button>
-                <button class="tab-btn" onclick="loadLeaderboard('cyber-defense', 'survival', this)">CD - Survival</button>
+                <button class="tab-btn active" onclick="loadLeaderboard('keyboard-hero', 'hard', this)">Keyboard Hero</button>
+                <button class="tab-btn" onclick="loadLeaderboard('cyber-defense', 'survival', this)">Cyber Defense</button>
+                <button class="tab-btn" onclick="loadLeaderboard('cyber-golf', 'standard', this)">Cyber Golf</button>
             </div>
             <div id="leaderboard-list" class="leaderboard-list">
                 <div style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Caricamento...</div>
@@ -559,26 +569,8 @@
 
         async function loadGameScores() {
             try {
-                // Load Keyboard Hero Medium scores from Supabase
-                const { data: mediumData, error: mediumError } = await supabase
-                    .from('scores')
-                    .select('score')
-                    .eq('nickname', currentNickname)
-                    .eq('game', 'keyboard-hero')
-                    .eq('difficulty', 'medium')
-                    .order('score', { ascending: false })
-                    .limit(1);
-
-                if (mediumError) {
-                    console.error('Error loading KH medium scores:', mediumError);
-                    document.getElementById('kh-medium-score').textContent = '0';
-                } else {
-                    const mediumScore = mediumData && mediumData.length > 0 ? mediumData[0].score : 0;
-                    document.getElementById('kh-medium-score').textContent = mediumScore;
-                }
-
-                // Load Keyboard Hero Hard scores from Supabase
-                const { data: hardData, error: hardError } = await supabase
+                // Load Keyboard Hero score from Supabase
+                const { data: khData, error: khError } = await supabase
                     .from('scores')
                     .select('score')
                     .eq('nickname', currentNickname)
@@ -587,12 +579,12 @@
                     .order('score', { ascending: false })
                     .limit(1);
 
-                if (hardError) {
-                    console.error('Error loading KH hard scores:', hardError);
-                    document.getElementById('kh-hard-score').textContent = '0';
+                if (khError) {
+                    console.error('Error loading KH scores:', khError);
+                    document.getElementById('kh-score').textContent = '0';
                 } else {
-                    const hardScore = hardData && hardData.length > 0 ? hardData[0].score : 0;
-                    document.getElementById('kh-hard-score').textContent = hardScore;
+                    const khScore = khData && khData.length > 0 ? khData[0].score : 0;
+                    document.getElementById('kh-score').textContent = khScore;
                 }
 
                 // Load Cyber Defense scores from Supabase
@@ -614,11 +606,29 @@
                     const secs = Math.floor(bestTime % 60);
                     document.getElementById('cd-survival-time').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                 }
+
+                // Load Cyber Golf scores from Supabase
+                const { data: cgData, error: cgError } = await supabase
+                    .from('scores')
+                    .select('score')
+                    .eq('nickname', currentNickname)
+                    .eq('game', 'cyber-golf')
+                    .eq('difficulty', 'standard')
+                    .order('score', { ascending: false })
+                    .limit(1);
+
+                if (cgError) {
+                    console.error('Error loading CG scores:', cgError);
+                    document.getElementById('cg-score').textContent = '0';
+                } else {
+                    const cgScore = cgData && cgData.length > 0 ? cgData[0].score : 0;
+                    document.getElementById('cg-score').textContent = cgScore;
+                }
             } catch (err) {
                 console.error('Error:', err);
-                document.getElementById('kh-medium-score').textContent = '0';
-                document.getElementById('kh-hard-score').textContent = '0';
+                document.getElementById('kh-score').textContent = '0';
                 document.getElementById('cd-survival-time').textContent = '0:00';
+                document.getElementById('cg-score').textContent = '0';
             }
         }
 
